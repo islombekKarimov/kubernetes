@@ -1,0 +1,60 @@
+version: '3'
+
+networks:
+  kubernetes_network:
+    driver: bridge
+
+services:
+  user-mysql-db:
+    image: mysql
+    container_name: user_db
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=users_db
+      - MYSQL_USER=admin
+      - MYSQL_PASSWORD=123
+    ports:
+      - "3307:3306"
+    networks: [ kubernetes ]
+
+  user-app:
+    image: epamislombekkarimov/users-service:1.0.0
+    container_name: user_service
+    environment:
+      - DB_HOST=user-mysql-db
+      - DB_PASSWORD=123
+      - DB_PORT=3306
+      - DB_USERNAME=admin
+      - DB_NAME=users_db
+    ports:
+      - "8081:8081"
+    depends_on: [ user-mysql-db ]
+    networks: [ kubernetes ]
+
+
+  posts-mysql-db:
+    image: mysql
+    container_name: posts_db
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=posts_db
+      - MYSQL_USER=admin
+      - MYSQL_PASSWORD=123
+    ports:
+      - "3306:3306"
+    networks: [ k8s_network ]
+
+  posts-app:
+    image: epamislombekkarimov/posts-service:1.0.0
+    container_name: posts_service
+    environment:
+      - DB_HOST=posts-mysql-db
+      - DB_PASSWORD=123
+      - DB_PORT=3306
+      - DB_USERNAME=admin
+      - DB_NAME=posts_db
+      - USERS_SERVICE_URL=http://user-app:8081
+    ports:
+      - "8080:8080"
+    depends_on: [ posts-mysql-db ]
+    networks: [ kubernetes ]
